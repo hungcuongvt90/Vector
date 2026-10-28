@@ -1,5 +1,6 @@
 import com.android.tools.smali.dexlib2.DexFileFactory
 import com.android.tools.smali.dexlib2.Opcodes
+import com.android.tools.smali.dexlib2.Opcode
 import com.android.tools.smali.dexlib2.iface.ClassDef
 import com.android.tools.smali.dexlib2.iface.instruction.ReferenceInstruction
 import com.android.tools.smali.dexlib2.iface.reference.FieldReference
@@ -238,6 +239,51 @@ androidComponents {
 evaluationDependsOn(":manager")
 
 evaluationDependsOn(":daemon")
+
+// A FileLock is released when its channel becomes unreachable. These fields are
+// lifetime roots, even though ordinary code does not read them after startup.
+// Check the optimized daemon, where R8 can otherwise discard write-only fields.
+val checkDaemonLockRetention = tasks.register("checkDaemonLockRetentionRelease") {
+    group = "verification"
+    description = "Checks that the release daemon retains its singleton lock and channel."
+    dependsOn(":daemon:minifyReleaseWithR8")
+    val dexDir = project(":daemon").layout.buildDirectory.dir(
+        "intermediates/dex/release/minifyReleaseWithR8"
+    )
+    inputs.dir(dexDir)
+    val report = layout.buildDirectory.file("reports/daemon-lock-retention-release.txt")
+    outputs.file(report)
+    doLast {
+        val required = mapOf(
+            "lockChannel" to "Ljava/nio/channels/FileChannel;",
+            "fileLock" to "Ljava/nio/channels/FileLock;"
+        )
+        val classes = dexDir.get().asFile.walkTopDown().filter { it.extension == "dex" }
+            .flatMap { DexFileFactory.loadDexFile(it, Opcodes.forApi(27)).classes.asSequence() }
+            .toList()
+        val owner = classes.singleOrNull { cls ->
+            required.all { (name, type) ->
+                cls.staticFields.any { it.name == name && it.type == type }
+            }
+        } ?: throw GradleException(
+            "Daemon singleton lock roots were removed by R8; the channel can be collected " +
+                "and a second vectord can start after a soft reboot."
+        )
+        val writes = classes.flatMap { it.methods }.flatMap { method ->
+            method.implementation?.instructions?.filter { it.opcode == Opcode.SPUT_OBJECT }
+                ?.mapNotNull { (it as? ReferenceInstruction)?.reference as? FieldReference }
+                ?.filter { it.definingClass == owner.type }?.map { it.name } ?: emptyList()
+        }.toSet()
+        check(writes.containsAll(required.keys)) {
+            "Daemon lock roots exist but are never assigned: ${required.keys - writes}"
+        }
+        report.get().asFile.apply {
+            parentFile.mkdirs()
+            writeText("PASS: retained and assigned singleton lock roots in ${owner.type}\n")
+        }
+    }
+}
+tasks.matching { it.name == "zipRelease" }.configureEach { dependsOn(checkDaemonLockRetention) }
 
 /**
  * Fails the build when a type whose super class is generated at runtime leaks into a class that

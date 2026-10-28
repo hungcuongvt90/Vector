@@ -8,6 +8,14 @@
     public static void main(java.lang.String[]);
 }
 
+# These write-only fields keep the daemon's singleton file lock alive. Removing
+# their stores lets GC close the channel, releasing the lock while vectord is
+# still running and allowing another daemon to start after a soft reboot.
+-keepclassmembers class org.matrix.vector.daemon.data.FileSystem {
+    java.nio.channels.FileChannel lockChannel;
+    java.nio.channels.FileLock fileLock;
+}
+
 
 # Keep IPC data models intact so Gson serializes the correct JSON keys
 -keep class org.matrix.vector.daemon.CliRequest { *; }
