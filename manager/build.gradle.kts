@@ -15,7 +15,7 @@ ktfmt { kotlinLangStyle() }
 kotlin {
     compilerOptions {
         // Material 3 Expressive has not landed in a stable material3 release; the
-        // expressive surface is gated behind these annotations even in 1.5.0-alpha25.
+        // expressive surface is gated behind these annotations in the beta BOM too.
         // Opting in once here beats sprinkling @OptIn through every screen.
         optIn.addAll(
             "androidx.compose.material3.ExperimentalMaterial3Api",
@@ -55,6 +55,8 @@ val versionHashProvider = rootProject.extra["versionHashProvider"] as Provider<S
 
 android {
     namespace = defaultManagerPackageName
+    // Compose 1.13 beta requires API 37.1 stubs; minSdk and targetSdk are unchanged.
+    compileSdkMinor = 1
 
     buildFeatures {
         compose = true

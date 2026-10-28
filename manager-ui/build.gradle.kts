@@ -20,7 +20,10 @@ kotlin {
 
 android {
     namespace = "org.matrix.vector.ui"
+    // Compose 1.13 beta requires API 37.1 stubs; minSdk and targetSdk are unchanged.
+    compileSdkMinor = 1
     buildFeatures { compose = true }
+    defaultConfig { testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner" }
 }
 
 dependencies {
@@ -40,4 +43,10 @@ dependencies {
     api(libs.androidx.navigation3.runtime)
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.webkit)
+
+    androidTestImplementation(platform(libs.androidx.compose.bom))
+    androidTestImplementation(libs.androidx.compose.ui.test.junit4)
+    androidTestImplementation(libs.androidx.test.runner)
+    androidTestImplementation(libs.androidx.test.ext.junit)
+    debugImplementation(libs.androidx.compose.ui.test.manifest)
 }

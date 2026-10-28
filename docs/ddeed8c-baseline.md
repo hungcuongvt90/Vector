@@ -3,7 +3,8 @@
 This branch starts at `ddeed8ca` (official Vector 2.2 / 3112), which the user
 reported works with their banking apps. It adds only the singleton lock-retention
 and safe-uninstall fixes described in `late-root-activation.md`, with their
-regression checks. It excludes the resource-cache bind change in `82112f99` and
+regression checks, plus the manager-only Compose RectList crash fix documented
+in `manager-rectlist-crash.md`. It excludes the resource-cache bind change in `82112f99` and
 the rendezvous changes in `eaffc816`. Native injection and app-scoping behavior
 are unchanged from `ddeed8ca`.
 

@@ -101,6 +101,11 @@ framework. It does mean `monkey -c LAUNCHER` picks one of the two at random:
 adb shell am start -n org.matrix.vector.manager/.ui.MainActivity
 ```
 
-There is no test source set anywhere in this repository, and CI runs `zipAll` and nothing else. A
-green tick means it compiles and packages. Everything else is verified by running it against a real
-daemon on a device.
+`:manager-ui` has device-side Compose regression tests, runnable with
+`./gradlew :manager-ui:connectedDebugAndroidTest`. They reproduce the RectList baseline/reused-item
+crash described in `../docs/manager-rectlist-crash.md`, without a daemon. The shared Compose stack
+uses the beta BOM for Expressive and the upstream layout fix; keep both manager modules aligned.
+Its API 37.1 compile stubs do not change the manager's API 37 target or API 27 minimum.
+
+CI packages with `zipAll`; it does not run these device tests. A green tick means it compiles and
+packages, not that daemon integration or on-device UI behavior has been verified.
