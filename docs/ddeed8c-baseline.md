@@ -1,12 +1,23 @@
 # Build from the known working ddeed8ca baseline
 
-This branch starts at `ddeed8ca` (official Vector 2.2 / 3112), which the user
-reported works with their banking apps. It adds only the singleton lock-retention
+The source tree uses `ddeed8ca` (official Vector 2.2 / 3112), which the user
+reported works with their banking apps, plus the singleton lock-retention
 and safe-uninstall fixes described in `late-root-activation.md`, with their
-regression checks, plus the manager-only Compose RectList crash fix documented
-in `manager-rectlist-crash.md`. It excludes the resource-cache bind change in `82112f99` and
-the rendezvous changes in `eaffc816`. Native injection and app-scoping behavior
+regression checks, and the manager-only Compose RectList crash fix documented
+in `manager-rectlist-crash.md`. Native injection and app-scoping behavior
 are unchanged from `ddeed8ca`.
+
+History still contains the resource-cache bind commit `82112f99` and rendezvous
+commit `eaffc816`: merging the fixes branch into master did not remove them.
+They were subsequently undone by explicit revert commits `be83f850` and
+`2616816f`, respectively, without rewriting published history. Seeing the
+original commits in `git log` is expected; their changes are no longer active.
+
+After both reverts, the complete Git tree was verified byte-for-byte against
+`ddeed8ca` with only the patches from our lifecycle fix `a0167238` and manager
+fix `1fa3681f` applied. Both trees were
+`f69b31b9a2d5a5243e455f5b025148020ce8c6e7`. The subsequent change to this document
+only clarifies the history; it does not change runtime code.
 
 Banking compatibility still requires testing this locally signed build on the
 phone. The reported good baseline had no enabled Xposed modules, while an
